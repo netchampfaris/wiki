@@ -67,6 +67,38 @@ const routes = [
 			},
 		],
 	},
+	// --- /wiki-proto ---------------------------------------------------------
+	// Throwaway IA prototype. Stub data only, no backend, no auth guard.
+	// Delete this block and src/proto/ to remove it.
+	{
+		path: '/wiki-proto',
+		component: () => import('@/proto/ProtoApp.vue'),
+		meta: { proto: true },
+		children: [
+			{
+				path: '',
+				name: 'ProtoHome',
+				component: () => import('@/proto/ProtoHome.vue'),
+			},
+			{
+				path: 'change-requests',
+				name: 'ProtoChangeRequests',
+				component: () => import('@/proto/ProtoChangeRequests.vue'),
+			},
+			{
+				path: 'space/:spaceId',
+				name: 'ProtoSpace',
+				component: () => import('@/proto/ProtoSpace.vue'),
+				props: true,
+			},
+			{
+				path: 'space/:spaceId/page/:pageKey',
+				name: 'ProtoPage',
+				component: () => import('@/proto/ProtoSpace.vue'),
+				props: true,
+			},
+		],
+	},
 ];
 
 // The app's base path. Kept in sync with APP_ROUTE in wiki_document.py (which
@@ -77,6 +109,9 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
+	// The prototype runs on stub data, so it must not need a session.
+	if (to.meta.proto) return next();
+
 	const { useSessionStore } = await import('@/stores/session');
 	const { useUserStore } = await import('@/stores/user');
 	const sessionStore = useSessionStore();

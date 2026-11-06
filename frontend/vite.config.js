@@ -60,7 +60,33 @@ export default defineConfig(async ({ command, mode }) => {
 			},
 		},
 		optimizeDeps: {
-			include: ['highlight.js/lib/core'],
+			// prosemirror-* are listed so they become shared optimizer entries. Without
+			// them the optimizer inlines a copy into the @tiptap/* pre-bundles while
+			// frappe-ui (excluded below, served as source) resolves its own — two
+			// module instances of the same package. DecorationSet from one is not
+			// `instanceof` the other, so DecorationGroup.from() reads `.members` off a
+			// foreign set, gets undefined, and the editor throws
+			// "Cannot read properties of undefined (reading 'localsInner')" on mount.
+			include: [
+				'highlight.js/lib/core',
+				// The whole family, not just the ones that threw: any prosemirror
+				// package that registers into a shared registry (tables claims the
+				// 'cell' selection JSON ID) or is compared with `instanceof` breaks
+				// the same way once it exists twice.
+				'prosemirror-changeset',
+				'prosemirror-commands',
+				'prosemirror-dropcursor',
+				'prosemirror-gapcursor',
+				'prosemirror-history',
+				'prosemirror-inputrules',
+				'prosemirror-keymap',
+				'prosemirror-model',
+				'prosemirror-schema-list',
+				'prosemirror-state',
+				'prosemirror-tables',
+				'prosemirror-transform',
+				'prosemirror-view',
+			],
 			// frappe-ui ships raw source and reaches its own files through the
 			// `#molecules/*` imports map, which esbuild resolves without trying
 			// extensions. Pre-bundling any of its entries therefore fails on

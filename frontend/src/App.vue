@@ -1,8 +1,23 @@
 <script setup lang="ts">
 import { FrappeUIProvider, setConfig, toast } from 'frappe-ui';
-import { onBeforeUnmount, onMounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import MainLayout from './layouts/MainLayout.vue';
 import { useSocket } from './socket';
+
+// The /wiki-proto IA prototype brings its own shell and runs on stub data, so
+// it skips MainLayout (which gates on a fetched user).
+//
+// `useRoute()` is still START_LOCATION on the first render, so `meta.proto` is
+// not populated yet and MainLayout would mount for a tick — long enough for its
+// WikiSettings child to fire an auto document resource. The URL is already
+// correct at that point, so it settles the question synchronously.
+const route = useRoute();
+const isProto = computed(
+	() =>
+		Boolean(route.meta.proto) ||
+		window.location.pathname.startsWith('/wiki-app/wiki-proto'),
+);
 
 setConfig('systemTimezone', window.timezone?.system || null);
 setConfig('localTimezone', window.timezone?.user || null);
@@ -24,7 +39,8 @@ onBeforeUnmount(() => {
 
 <template>
 	<FrappeUIProvider>
-		<MainLayout>
+		<router-view v-if="isProto" />
+		<MainLayout v-else>
 			<router-view />
 		</MainLayout>
 	</FrappeUIProvider>
